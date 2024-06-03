@@ -19,5 +19,5 @@ Data validation and filtering
 --Clean the data:
 	-- 1. Remove Duplicates
  	-- 2. Standardize the Data
- 	-- 3. Null Values or blank values
- 	-- 4. Remove Any Columns
+ 	-- 3. Remove Null Values or blank values
+ 	-- 4. Remove Any Columns that don't work
