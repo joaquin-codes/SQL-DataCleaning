@@ -20,7 +20,7 @@
 
 # Steps to Reproduce
 **1) Database Creation**
-- First, create a database called World_layoffs, where we will import the raw data from [layoffs.csv](https://github.com/joaquin-codes/SQL-DataCleaning/blob/main/layoffs.csv)
+- First, create a database called World_layoffs, where we will import the raw data from [layoffs.csv](https://github.com/joaquin-codes/SQL-DataRefinement/blob/main/layoffs.csv)
 
 **2) Data Cleaning**
 - Remove duplicates
