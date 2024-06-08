@@ -1,70 +1,147 @@
--- How many layoff each company has had
-SELECT company, SUM(total_laid_off) AS total_layoffs
-FROM layoffs_staging2
-GROUP BY company
-ORDER BY total_layoffs DESC
+-- How many layoffs each company has had
+SELECT 
+    company, 
+    SUM(total_laid_off) AS total_layoffs
+FROM 
+    layoffs_staging2
+GROUP BY 
+    company
+ORDER BY 
+    total_layoffs DESC
 ;
 
 -- What country has had the most layoffs
-select country, sum(total_laid_off) total_layoffs
-from layoffs_staging2
-group by country
-order by total_layoffs desc;
+SELECT 
+    country, 
+    SUM(total_laid_off) AS total_layoffs
+FROM 
+    layoffs_staging2
+GROUP BY 
+    country
+ORDER BY 
+    total_layoffs DESC
+;
 
--- Whata are some of the most recent layoffs by companys
-select company,`date`, sum(total_laid_off)
-from layoffs_staging2
-group by `date`, company
-order by `date` desc;
+-- What are some of the most recent layoffs by companies
+SELECT 
+    company,
+    `date`, 
+    SUM(total_laid_off) AS total_laid_off
+FROM 
+    layoffs_staging2
+GROUP BY 
+    `date`, 
+    company
+ORDER BY 
+    `date` DESC
+;
 
--- WHat year has had the most layoffs
-select year(`date`), sum(total_laid_off)
-from layoffs_staging2
-group by year(`date`)
-order by 1 desc;
+-- What year has had the most layoffs
+SELECT 
+    YEAR(`date`) AS year, 
+    SUM(total_laid_off) AS total_layoffs
+FROM 
+    layoffs_staging2
+GROUP BY 
+    YEAR(`date`)
+ORDER BY 
+    year DESC
+;
 
 -- Rolling Total of layoffs month to month
-with Rolling_total as (
-	select substring(`date`,1,7) as `month`, sum(total_laid_off) as total_off
-	from layoffs_staging2
-	where substring(`date`,1,7) is not null
-	group by `month`
-	order by 1 asc
+WITH Rolling_total AS (
+    SELECT 
+        SUBSTRING(`date`, 1, 7) AS `month`, 
+        SUM(total_laid_off) AS total_off
+    FROM 
+        layoffs_staging2
+    WHERE 
+        SUBSTRING(`date`, 1, 7) IS NOT NULL
+    GROUP BY 
+        `month`
+    ORDER BY 
+        `month` ASC
 ) 
-select `month`, total_off, sum(total_off) over (order by `month`) Rolling_Total_sum from rolling_total;
+SELECT 
+    `month`, 
+    total_off, 
+    SUM(total_off) OVER (ORDER BY `month`) AS Rolling_Total_sum 
+FROM 
+    Rolling_total
+;
 
 -- Ranks of companies by total layoffs within each year
-with company_year (company, years, total_laid_off) as (
-	select company, year(`date`), sum(total_laid_off)
-	from layoffs_staging2
-	group by year(`date`), company
-	
+WITH company_year AS (
+    SELECT 
+        company, 
+        YEAR(`date`) AS years, 
+        SUM(total_laid_off) AS total_laid_off
+    FROM 
+        layoffs_staging2
+    GROUP BY 
+        YEAR(`date`), 
+        company
 )
-select *, dense_rank() over ( partition by years order by total_laid_off desc) ranking
-from company_year
-where years is not null
-order by ranking;
+SELECT 
+    *, 
+    DENSE_RANK() OVER (PARTITION BY years ORDER BY total_laid_off DESC) AS ranking
+FROM 
+    company_year
+WHERE 
+    years IS NOT NULL
+ORDER BY 
+    ranking
+;
 
 -- What industries had the most layoffs per year
-
-SELECT 
-    YEAR(`date`) AS year,
-    industry,
-    SUM(total_laid_off) AS total_layoffs
-FROM layoffs_staging2
-GROUP BY YEAR(`date`), industry
-HAVING SUM(total_laid_off) = (
-    SELECT MAX(layoffs_by_industry.total_layoffs)
-    FROM (
-        SELECT 
-            YEAR(`date`) AS year,
-            industry,
-            SUM(total_laid_off) AS total_layoffs
-        FROM layoffs_staging2
-
-
-        GROUP BY YEAR(`date`), industry
-    ) AS layoffs_by_industry
-    WHERE layoffs_by_industry.year = YEAR(layoffs_staging2.date)
+WITH industry_year AS (
+    SELECT 
+        industry, 
+        YEAR(`date`) AS years, 
+        SUM(total_laid_off) AS total_laid_off
+    FROM 
+        layoffs_staging2
+    GROUP BY 
+        YEAR(`date`), 
+        industry
 )
-ORDER BY year;
+SELECT 
+    *, 
+    DENSE_RANK() OVER (PARTITION BY years ORDER BY total_laid_off DESC) AS ranking
+FROM 
+    industry_year
+WHERE 
+    years IS NOT NULL
+ORDER BY 
+    ranking
+;
+
+-- Rolling number of layoffs per year for each industry
+WITH industry_month AS (
+    SELECT 
+        industry,
+        SUBSTRING(`date`, 1, 7) AS `month`, 
+        SUM(total_laid_off) AS monthly_layoffs
+    FROM 
+        layoffs_staging2
+    WHERE 
+        SUBSTRING(`date`, 1, 7) IS NOT NULL
+    GROUP BY 
+        industry, 
+        `month`
+    ORDER BY 
+        industry, 
+        `month`
+)
+SELECT 
+    industry,
+    `month`,
+    monthly_layoffs,
+    SUM(monthly_layoffs) OVER (PARTITION BY industry ORDER BY `month`) AS rolling_total_sum
+FROM 
+    industry_month
+    where industry is not null
+ORDER BY 
+    industry, 
+    `month`
+;
